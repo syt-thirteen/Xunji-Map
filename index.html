@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>寻迹 · 北京红色地标数字地图</title>
+  <link rel="icon" type="image/png" href="/images/huoju1.png" />
+  <script type="module" crossorigin src="/assets/index-B-SgXgFC.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DwDtjyhy.css">
+</head>
+<body>
+
+  <!-- ==================== 1. 地图容器 ==================== -->
+  <div id="mapContainer"></div>
+
+  <!-- ==================== 2. 右上角悬浮菜单按钮 ==================== -->
+  <button id="menuBtn" class="menu-btn" title="全部地点">📍 全部地点</button>
+
+  <!-- ==================== 3. 侧滑菜单遮罩 ==================== -->
+  <div id="menuMask" class="menu-mask hidden"></div>
+
+  <!-- ==================== 4. 侧滑菜单面板 ==================== -->
+  <div id="menuPanel" class="menu-panel">
+    <div class="menu-header">寻访地点总览</div>
+    <div id="menuList" class="menu-list"></div>
+  </div>
+
+  <!-- ==================== 5. 底部弹出卡片 ==================== -->
+  <div id="placePopup" class="place-popup hidden">
+    <button id="popupCloseBtn" class="popup-close-btn" title="关闭">✕</button>
+    <div class="popup-handle"></div>
+    <img id="popupPhoto" class="place-photo" src="" alt="" />
+    <div class="place-info">
+      <span id="popupTitle" class="place-title"></span>
+      <button id="enterBtn" class="enter-btn">进入</button>
+    </div>
+  </div>
+
+  <!-- ==================== 6. 加载彩蛋层 ==================== -->
+  <div id="loadingMask" class="loading-mask hidden">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p id="loadingText" class="loading-text"></p>
+    </div>
+  </div>
+
+  <!-- ==================== 7. 全屏沉浸式场景弹窗（多级嵌套交互） ==================== -->
+  <div id="sceneModal" class="scene-modal hidden">
+    <!-- 顶部导航栏 -->
+    <div class="scene-navbar">
+      <button id="sceneBackBtn" class="scene-back-btn" title="返回上一步">
+        <span class="back-arrow">←</span>
+        <span id="sceneBackLabel">返回地图</span>
+      </button>
+      <h2 id="sceneTitle" class="scene-title">北大红楼</h2>
+      <div class="scene-nav-spacer"></div>
+    </div>
+    <!-- 动态内容区 -->
+    <div id="sceneContent" class="scene-content"></div>
+  </div>
+
+  <!-- ==================== 8. 全屏画廊浏览弹窗（新青年编辑部旧址） ==================== -->
+  <div id="gallerySceneModal" class="gallery-scene-modal hidden">
+    <!-- 顶部导航栏 -->
+    <div class="gallery-navbar">
+      <button id="galleryBackBtn" class="gallery-back-btn" title="返回地图">
+        <span class="gallery-back-arrow">←</span>
+        <span id="galleryBackLabel">返回地图</span>
+      </button>
+      <h2 id="galleryTitle" class="gallery-title">新青年编辑部旧址</h2>
+      <div class="gallery-nav-spacer"></div>
+    </div>
+
+    <!-- 主画面展示区 -->
+    <div class="gallery-main-stage" id="galleryMainStage">
+      <!-- 主图 -->
+      <img
+        id="galleryMainImg"
+        class="gallery-main-img"
+        src=""
+        alt="主画面"
+        draggable="false"
+      />
+
+      <!-- 左箭头（多图时显示） -->
+      <button id="galleryArrowLeft" class="gallery-arrow gallery-arrow-left hidden" title="上一张">
+        ‹
+      </button>
+
+      <!-- 右箭头（多图时显示） -->
+      <button id="galleryArrowRight" class="gallery-arrow gallery-arrow-right hidden" title="下一张">
+        ›
+      </button>
+
+      <!-- 页码指示器（多图时显示） -->
+      <div id="galleryCounter" class="gallery-counter hidden">
+        <span id="galleryCounterCurr">1</span> / <span id="galleryCounterTotal">1</span>
+      </div>
+    </div>
+
+    <!-- 底部横向可滑动缩略图轨道 -->
+    <div class="gallery-thumb-bar" id="galleryThumbBar">
+      <div class="gallery-thumb-track" id="galleryThumbTrack">
+        <!-- JS 动态填充 23 个栏目卡片 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 9. 中法大学旧址 · 复合型交互弹窗（一弹窗两视图） ==================== -->
+  <div id="zfSceneModal" class="zf-scene-modal hidden">
+    <!-- ====== 视图 A：入口视图（封面大图 + 14 厅网格卡片） ====== -->
+    <div id="zfEntryView" class="zf-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="zf-navbar">
+        <button id="zfEntryBackBtn" class="zf-back-btn" title="返回地图">
+          <span class="zf-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="zf-nav-title">中法大学旧址</h2>
+        <div class="zf-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区 -->
+      <div class="zf-entry-content">
+        <!-- 封面大图 -->
+        <div class="zf-hero">
+          <img
+            id="zfHeroImg"
+            class="zf-hero-img"
+            src=""
+            alt="中法大学旧址"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #1a0000, #0a0000)'; this.style.display='none';"
+          />
+          <div class="zf-hero-overlay">
+            <h1>中法大学旧址</h1>
+            <p id="zfHeroDesc">中国共产党早期北京革命活动的重要场所之一</p>
+          </div>
+        </div>
+
+        <!-- 展厅卡片网格 -->
+        <div class="zf-cards-section">
+          <div class="zf-cards-label">🏛️ 展厅概览 · 共 <span id="zfHallCount">14</span> 个展厅</div>
+          <div class="zf-cards-grid" id="zfCardsGrid">
+            <!-- JS 动态填充 14 个展厅卡片 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图（主图 + 缩略图轨道） ====== -->
+    <div id="zfGalleryView" class="zf-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="zf-navbar">
+        <button id="zfGalleryBackBtn" class="zf-back-btn" title="返回展厅列表">
+          <span class="zf-back-arrow">←</span>
+          <span id="zfGalleryBackLabel">展厅列表</span>
+        </button>
+        <h2 id="zfGalleryTitle" class="zf-nav-title">中法大学旧址 · XX厅</h2>
+        <div class="zf-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面展示区 -->
+      <div class="zf-gallery-stage" id="zfGalleryStage">
+        <!-- 主图 -->
+        <img
+          id="zfMainImg"
+          class="zf-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="zfArrowLeft" class="zf-arrow zf-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="zfArrowRight" class="zf-arrow zf-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="zfCounter" class="zf-counter hidden">
+          <span id="zfCounterCurr">1</span> / <span id="zfCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="zf-thumb-bar" id="zfThumbBar">
+        <div class="zf-thumb-track" id="zfThumbTrack">
+          <!-- JS 动态填充该厅所有图片缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 10. 钟鼓楼 · 双子星沉浸式交互弹窗（三视图） ==================== -->
+  <div id="zglSceneModal" class="zgl-scene-modal hidden">
+    <!-- ====== 视图 A：双子星入口（钟楼/鼓楼 左右分屏） ====== -->
+    <div id="zglEntryView" class="zgl-entry-view">
+      <div class="zgl-entry-panels">
+        <!-- 左半屏：钟楼 -->
+        <div class="zgl-panel zgl-panel-left" id="zglPanelZhonglou">
+          <img class="zgl-panel-img" src="" alt="钟楼" draggable="false" />
+          <div class="zgl-panel-overlay">
+            <h2 class="zgl-panel-name">钟楼</h2>
+            <button class="zgl-panel-btn" data-tower="zhonglou">进 入</button>
+          </div>
+        </div>
+        <!-- 中间分割线 -->
+        <div class="zgl-panel-divider"></div>
+        <!-- 右半屏：鼓楼 -->
+        <div class="zgl-panel zgl-panel-right" id="zglPanelGulou">
+          <img class="zgl-panel-img" src="" alt="鼓楼" draggable="false" />
+          <div class="zgl-panel-overlay">
+            <h2 class="zgl-panel-name">鼓楼</h2>
+            <button class="zgl-panel-btn" data-tower="gulou">进 入</button>
+          </div>
+        </div>
+      </div>
+      <!-- 底部关闭按钮 -->
+      <button id="zglEntryCloseBtn" class="zgl-entry-close-btn" title="返回地图">
+        <span class="zgl-entry-close-icon">✕</span>
+        <span>返回地图</span>
+      </button>
+    </div>
+
+    <!-- ====== 视图 B：展览列表 ====== -->
+    <div id="zglListView" class="zgl-list-view hidden">
+      <div class="zgl-navbar">
+        <button id="zglListBackBtn" class="zgl-back-btn" title="返回双子星入口">
+          <span class="zgl-back-arrow">←</span>
+          <span id="zglListBackLabel">选择塔楼</span>
+        </button>
+        <h2 id="zglListTitle" class="zgl-nav-title">钟楼 · 展览</h2>
+        <div class="zgl-nav-spacer"></div>
+      </div>
+      <div class="zgl-list-content">
+        <div class="zgl-hero">
+          <img id="zglHeroImg" class="zgl-hero-img" src="" alt=""
+               onerror="this.parentElement.style.background='linear-gradient(135deg, #1a0000, #0a0000)'; this.style.display='none';" />
+          <div class="zgl-hero-overlay">
+            <h1 id="zglHeroTitle">钟楼</h1>
+            <p id="zglHeroDesc"></p>
+          </div>
+        </div>
+        <div class="zgl-cards-section">
+          <div class="zgl-cards-label">🏛️ 展览概览 · 共 <span id="zglExhibitionCount">0</span> 个展览</div>
+          <div class="zgl-cards-grid" id="zglCardsGrid">
+            <!-- JS 动态填充 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 C：画廊 + 介绍侧滑框 ====== -->
+    <div id="zglGalleryView" class="zgl-gallery-view hidden">
+      <div class="zgl-navbar">
+        <button id="zglGalleryBackBtn" class="zgl-back-btn" title="返回展览列表">
+          <span class="zgl-back-arrow">←</span>
+          <span id="zglGalleryBackLabel">展览列表</span>
+        </button>
+        <h2 id="zglGalleryTitle" class="zgl-nav-title">钟楼 · 展览</h2>
+        <div class="zgl-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面展示区 -->
+      <div class="zgl-gallery-stage" id="zglGalleryStage">
+        <img
+          id="zglMainImg"
+          class="zgl-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="zglArrowLeft" class="zgl-arrow zgl-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="zglArrowRight" class="zgl-arrow zgl-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="zglCounter" class="zgl-counter hidden">
+          <span id="zglCounterCurr">1</span> / <span id="zglCounterTotal">1</span>
+        </div>
+
+        <!-- 文物详情浮动按钮 -->
+        <button id="zglInfoBtn" class="zgl-info-btn" title="文物详情">
+          <span class="zgl-info-icon">📖</span>
+          <span class="zgl-info-label">文物详情</span>
+        </button>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="zgl-thumb-bar" id="zglThumbBar">
+        <div class="zgl-thumb-track" id="zglThumbTrack">
+          <!-- JS 动态填充缩略图 -->
+        </div>
+      </div>
+
+      <!-- 介绍侧滑框遮罩 -->
+      <div id="zglDrawerOverlay" class="zgl-drawer-overlay hidden"></div>
+
+      <!-- 介绍侧滑框面板 -->
+      <div id="zglDrawer" class="zgl-drawer">
+        <div class="zgl-drawer-header">
+          <h3 class="zgl-drawer-title">📖 文物详情</h3>
+          <button id="zglDrawerCloseBtn" class="zgl-drawer-close-btn" title="关闭">✕</button>
+        </div>
+        <div class="zgl-drawer-body" id="zglDrawerBody">
+          <!-- JS 动态填充 description -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 11. 长辛店留法勤工俭学旧址 · 一弹窗两视图沉浸式交互弹窗 ==================== -->
+  <div id="cxdSceneModal" class="cxd-scene-modal hidden">
+    <!-- ====== 视图 A：入口视图（历史时间轴 + 专题展区卡片） ====== -->
+    <div id="cxdEntryView" class="cxd-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="cxd-navbar">
+        <button id="cxdEntryBackBtn" class="cxd-back-btn" title="返回地图">
+          <span class="cxd-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="cxd-nav-title">长辛店留法勤工俭学旧址</h2>
+        <div class="cxd-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="cxd-entry-content">
+        <!-- 封面大图 -->
+        <div class="cxd-hero">
+          <img
+            id="cxdHeroImg"
+            class="cxd-hero-img"
+            src=""
+            alt="长辛店留法勤工俭学旧址"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #1a0000, #0a0000)'; this.style.display='none';"
+          />
+          <div class="cxd-hero-overlay">
+            <h1>长辛店留法勤工俭学旧址</h1>
+            <p id="cxdHeroDesc">近代中国工运与留法勤工俭学运动的重要摇篮。</p>
+          </div>
+        </div>
+
+        <!-- 🎯 姐姐修改：把专题展区提到了上面！ -->
+        <!-- 🏛️ 专题展区 -->
+        <div class="cxd-cards-section">
+          <div class="cxd-section-title">🏛️ 专题展区</div>
+          <div class="cxd-cards-grid" id="cxdCardsGrid">
+            <!-- JS 动态填充展区卡片 -->
+          </div>
+        </div>
+
+        <!-- 🎯 姐姐修改：把时间线长廊降到了下面！ -->
+        <!-- 📜 历史足迹长廊（1912-1927） -->
+        <div class="cxd-timeline-section">
+          <div class="cxd-section-title">🕰️ 历史足迹长廊（1912-1927）</div>
+          <div class="cxd-timeline-track" id="cxdTimelineTrack">
+            <!-- JS 动态填充年份与事件卡片 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图（大图 + 缩略图轨道） ====== -->
+    <div id="cxdGalleryView" class="cxd-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="cxd-navbar">
+        <button id="cxdGalleryBackBtn" class="cxd-back-btn" title="返回展区总览">
+          <span class="cxd-back-arrow">←</span>
+          <span>展区总览</span>
+        </button>
+        <h2 id="cxdGalleryTitle" class="cxd-nav-title">长辛店 · 室内展陈</h2>
+        <div class="cxd-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台 -->
+      <div class="cxd-gallery-stage" id="cxdGalleryStage">
+        <img
+          id="cxdMainImg"
+          class="cxd-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="cxdArrowLeft" class="cxd-arrow cxd-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="cxdArrowRight" class="cxd-arrow cxd-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="cxdCounter" class="cxd-counter hidden">
+          <span id="cxdCounterCurr">1</span> / <span id="cxdCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="cxd-thumb-bar" id="cxdThumbBar">
+        <div class="cxd-thumb-track" id="cxdThumbTrack">
+          <!-- JS 动态填充缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 12. 李大钊故居 · 一弹窗两视图沉浸式交互弹窗 ==================== -->
+  <div id="ldzSceneModal" class="ldz-scene-modal hidden">
+    <!-- ====== 视图 A：入口网格视图（封面大图 + 展室卡片网格） ====== -->
+    <div id="ldzEntryView" class="ldz-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="ldz-navbar">
+        <button id="ldzEntryBackBtn" class="ldz-back-btn" title="返回地图">
+          <span class="ldz-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="ldz-nav-title">李大钊故居</h2>
+        <div class="ldz-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="ldz-entry-content">
+        <!-- 封面大图 -->
+        <div class="ldz-hero">
+          <img
+            id="ldzHeroImg"
+            class="ldz-hero-img"
+            src=""
+            alt="李大钊故居"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #1a0000, #0a0000)'; this.style.display='none';"
+          />
+          <div class="ldz-hero-overlay">
+            <h1>李大钊故居</h1>
+            <p id="ldzHeroDesc">铁肩担道义，妙手著文章。</p>
+          </div>
+        </div>
+
+        <!-- 展室卡片网格 -->
+        <div class="ldz-cards-section">
+          <div class="ldz-cards-label">🏛️ 展室概览 · 共 <span id="ldzRoomCount">6</span> 个展室</div>
+          <div class="ldz-cards-grid" id="ldzCardsGrid">
+            <!-- JS 动态填充展室卡片 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图（大图 + 缩略图轨道） ====== -->
+    <div id="ldzGalleryView" class="ldz-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="ldz-navbar">
+        <button id="ldzGalleryBackBtn" class="ldz-back-btn" title="返回展室总览">
+          <span class="ldz-back-arrow">←</span>
+          <span>展室总览</span>
+        </button>
+        <h2 id="ldzGalleryTitle" class="ldz-nav-title">李大钊故居 · 夫妻卧室</h2>
+        <div class="ldz-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台 -->
+      <div class="ldz-gallery-stage" id="ldzGalleryStage">
+        <img
+          id="ldzMainImg"
+          class="ldz-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="ldzArrowLeft" class="ldz-arrow ldz-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="ldzArrowRight" class="ldz-arrow ldz-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="ldzCounter" class="ldz-counter hidden">
+          <span id="ldzCounterCurr">1</span> / <span id="ldzCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="ldz-thumb-bar" id="ldzThumbBar">
+        <div class="ldz-thumb-track" id="ldzThumbTrack">
+          <!-- JS 动态填充缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 13. 京报馆旧址 · 一弹窗两视图沉浸式交互弹窗（百年红色报刊 + 邵飘萍生平事迹） ==================== -->
+  <div id="jbgSceneModal" class="jbg-scene-modal hidden">
+    <!-- ====== 视图 A：入口双板块视图 ====== -->
+    <div id="jbgEntryView" class="jbg-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="jbg-navbar">
+        <button id="jbgEntryBackBtn" class="jbg-back-btn" title="返回地图">
+          <span class="jbg-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="jbg-nav-title">京报馆旧址</h2>
+        <div class="jbg-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="jbg-entry-content" id="jbgEntryContent">
+        <!-- 封面大图 -->
+        <div class="jbg-hero">
+          <img
+            id="jbgHeroImg"
+            class="jbg-hero-img"
+            src=""
+            alt="京报馆旧址"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #1a0000, #0a0000)'; this.style.display='none';"
+          />
+          <div class="jbg-hero-overlay">
+            <h1>京报馆旧址</h1>
+            <p id="jbgHeroDesc">一支笔抵过十万军。</p>
+          </div>
+        </div>
+
+        <!-- 双板块卡片区 -->
+        <div class="jbg-cards-section">
+          <!-- 第一板块：百年红色报刊 -->
+          <div class="jbg-section">
+            <div class="jbg-section-title">百年红色报刊</div>
+            <div class="jbg-card-track" id="jbgBainianTrack">
+              <!-- JS 动态填充 4 个展厅卡片 -->
+            </div>
+          </div>
+
+          <!-- 第二板块：邵飘萍生平事迹 -->
+          <div class="jbg-section">
+            <div class="jbg-section-title">邵飘萍生平事迹</div>
+            <div class="jbg-card-track" id="jbgShaoTrack">
+              <!-- JS 动态填充 3 个展厅卡片 -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图 ====== -->
+    <div id="jbgGalleryView" class="jbg-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="jbg-navbar">
+        <button id="jbgGalleryBackBtn" class="jbg-back-btn" title="返回展厅总览">
+          <span class="jbg-back-arrow">←</span>
+          <span>展厅总览</span>
+        </button>
+        <h2 id="jbgGalleryTitle" class="jbg-nav-title">京报馆旧址 · 百年红色报刊 · 第一展厅</h2>
+        <div class="jbg-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台（object-fit: contain，黑色背景） -->
+      <div class="jbg-gallery-stage" id="jbgGalleryStage">
+        <img
+          id="jbgMainImg"
+          class="jbg-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="jbgArrowLeft" class="jbg-arrow jbg-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="jbgArrowRight" class="jbg-arrow jbg-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="jbgCounter" class="jbg-counter hidden">
+          <span id="jbgCounterCurr">1</span> / <span id="jbgCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="jbg-thumb-bar">
+        <div class="jbg-thumb-track" id="jbgThumbTrack">
+          <!-- JS 动态填充该展厅所有图片缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 14. 鲁迅博物馆 · 一弹窗两视图沉浸式交互弹窗（陈列厅 + 特色专题） ==================== -->
+  <div id="lxSceneModal" class="lx-scene-modal hidden">
+    <!-- ====== 视图 A：入口双板块视图 ====== -->
+    <div id="lxEntryView" class="lx-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="lx-navbar">
+        <button id="lxEntryBackBtn" class="lx-back-btn" title="返回地图">
+          <span class="lx-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="lx-nav-title">鲁迅博物馆</h2>
+        <div class="lx-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="lx-entry-content" id="lxEntryContent">
+        <!-- 封面大图 -->
+        <div class="lx-hero">
+          <img
+            id="lxHeroImg"
+            class="lx-hero-img"
+            src=""
+            alt="鲁迅博物馆"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #1a0000, #0a0000)'; this.style.display='none';"
+          />
+          <div class="lx-hero-overlay">
+            <h1>鲁迅博物馆</h1>
+            <p id="lxHeroDesc">横眉冷对千夫指，俯首甘为孺子牛。</p>
+          </div>
+        </div>
+
+        <!-- 双板块卡片区 -->
+        <div class="lx-cards-section">
+          <!-- 第一板块：陈列厅（7 个展厅） -->
+          <div class="lx-section">
+            <div class="lx-section-title">陈列厅</div>
+            <div class="lx-card-track" id="lxChenliTrack">
+              <!-- JS 动态填充 7 个展厅卡片 -->
+            </div>
+          </div>
+
+          <!-- 第二板块：特色专题（简牍 / 旧居 / 前哨） -->
+          <div class="lx-section">
+            <div class="lx-section-title">特色专题</div>
+            <div class="lx-card-track" id="lxSpecialTrack">
+              <!-- JS 动态填充 3 个展厅卡片 -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图 ====== -->
+    <div id="lxGalleryView" class="lx-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="lx-navbar">
+        <button id="lxGalleryBackBtn" class="lx-back-btn" title="返回展厅总览">
+          <span class="lx-back-arrow">←</span>
+          <span>展厅总览</span>
+        </button>
+        <h2 id="lxGalleryTitle" class="lx-nav-title">鲁迅博物馆 · 陈列厅 · 第一展厅</h2>
+        <div class="lx-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台（object-fit: contain，黑色背景） -->
+      <div class="lx-gallery-stage" id="lxGalleryStage">
+        <img
+          id="lxMainImg"
+          class="lx-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="lxArrowLeft" class="lx-arrow lx-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="lxArrowRight" class="lx-arrow lx-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="lxCounter" class="lx-counter hidden">
+          <span id="lxCounterCurr">1</span> / <span id="lxCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="lx-thumb-bar">
+        <div class="lx-thumb-track" id="lxThumbTrack">
+          <!-- JS 动态填充该展厅所有图片缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 腾讯地图 JS API ==================== -->
+  <script src="https://map.qq.com/api/js?v=2.exp&key=56XBZ-UMCY3-7X63R-ORNRJ-SB5WV-UIFKE&callback=onMapLoaded"></script>
+
+  <!-- 应用主逻辑 -->
+
+  <!-- ==================== 15. 蒙藏学校旧址 · 一弹窗两视图沉浸式交互弹窗（入口网格 → 画廊） ==================== -->
+  <div id="mzSceneModal" class="mz-scene-modal hidden">
+    <!-- ====== 视图 A：入口网格视图（封面大图 + 10 展厅卡片网格） ====== -->
+    <div id="mzEntryView" class="mz-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="mz-navbar">
+        <button id="mzEntryBackBtn" class="mz-back-btn" title="返回地图">
+          <span class="mz-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="mz-nav-title">蒙藏学校旧址</h2>
+        <div class="mz-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="mz-entry-content" id="mzEntryContent">
+        <!-- 封面大图 -->
+        <div class="mz-hero">
+          <img
+            id="mzHeroImg"
+            class="mz-hero-img"
+            src=""
+            alt="蒙藏学校旧址"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #1a0000, #0a0000)'; this.style.display='none';"
+          />
+          <div class="mz-hero-overlay">
+            <h1>蒙藏学校旧址</h1>
+            <p id="mzHeroDesc">中华民族大团结的见证，中国共产党早期培养民族干部的摇篮。</p>
+          </div>
+        </div>
+
+        <!-- 展厅卡片网格 -->
+        <div class="mz-cards-section">
+          <div class="mz-cards-label">🏛️ 展厅概览 · 共 <span id="mzHallCount">10</span> 个展厅</div>
+          <div class="mz-cards-grid" id="mzCardsGrid">
+            <!-- JS 动态填充 10 个展厅卡片 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图（主图 + 缩略图轨道） ====== -->
+    <div id="mzGalleryView" class="mz-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="mz-navbar">
+        <button id="mzGalleryBackBtn" class="mz-back-btn" title="返回展厅总览">
+          <span class="mz-back-arrow">←</span>
+          <span id="mzGalleryBackLabel">展厅总览</span>
+        </button>
+        <h2 id="mzGalleryTitle" class="mz-nav-title">蒙藏学校旧址 · 第一展厅</h2>
+        <div class="mz-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台（object-fit: contain，黑色背景） -->
+      <div class="mz-gallery-stage" id="mzGalleryStage">
+        <img
+          id="mzMainImg"
+          class="mz-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="mzArrowLeft" class="mz-arrow mz-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="mzArrowRight" class="mz-arrow mz-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="mzCounter" class="mz-counter hidden">
+          <span id="mzCounterCurr">1</span> / <span id="mzCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="mz-thumb-bar" id="mzThumbBar">
+        <div class="mz-thumb-track" id="mzThumbTrack">
+          <!-- JS 动态填充该展厅所有图片缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ==================== 16. 中国人民抗日战争纪念馆 · 一弹窗两视图沉浸式交互弹窗（入口网格 → 画廊） ==================== -->
+  <div id="krSceneModal" class="kr-scene-modal hidden">
+    <!-- ====== 视图 A：入口网格视图（封面大图 + 9 展厅卡片网格） ====== -->
+    <div id="krEntryView" class="kr-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="kr-navbar">
+        <button id="krEntryBackBtn" class="kr-back-btn" title="返回地图">
+          <span class="kr-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="kr-nav-title">中国人民抗日战争纪念馆</h2>
+        <div class="kr-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="kr-entry-content" id="krEntryContent">
+        <!-- 封面大图（Hero） -->
+        <div class="kr-hero">
+          <img
+            id="krHeroImg"
+            class="kr-hero-img"
+            src=""
+            alt="中国人民抗日战争纪念馆"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #140a0a, #0a0505)'; this.style.display='none';"
+          />
+          <div class="kr-hero-overlay">
+            <h1 class="kr-hero-title">中国人民抗日战争纪念馆</h1>
+            <p id="krHeroDesc" class="kr-hero-desc">铭记历史，缅怀先烈，珍爱和平，开创未来。</p>
+          </div>
+        </div>
+
+        <!-- 展厅卡片网格 -->
+        <div class="kr-cards-section">
+          <div class="kr-cards-label">🏛️ 展厅概览 · 共 <span id="krHallCount">9</span> 个展厅</div>
+          <div class="kr-cards-grid" id="krCardsGrid">
+            <!-- JS 动态填充 9 个展厅卡片 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图（主图 + 缩略图轨道） ====== -->
+    <div id="krGalleryView" class="kr-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="kr-navbar">
+        <button id="krGalleryBackBtn" class="kr-back-btn" title="返回展厅总览">
+          <span class="kr-back-arrow">←</span>
+          <span id="krGalleryBackLabel">展厅总览</span>
+        </button>
+        <h2 id="krGalleryTitle" class="kr-nav-title">中国人民抗日战争纪念馆 · 序厅</h2>
+        <div class="kr-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台（object-fit: contain，黑色背景） -->
+      <div class="kr-gallery-stage" id="krGalleryStage">
+        <img
+          id="krMainImg"
+          class="kr-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="krArrowLeft" class="kr-arrow kr-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="krArrowRight" class="kr-arrow kr-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="krCounter" class="kr-counter hidden">
+          <span id="krCounterCurr">1</span> / <span id="krCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="kr-thumb-bar" id="krThumbBar">
+        <div class="kr-thumb-track" id="krThumbTrack">
+          <!-- JS 动态填充该展厅所有图片缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 17. 香山革命纪念馆 · 一弹窗两视图沉浸式交互弹窗（入口双板块 → 画廊） ==================== -->
+  <div id="xsSceneModal" class="xs-scene-modal hidden">
+    <!-- ====== 视图 A：入口双板块视图（Hero + 主展厅卡片流 + 文艺专题卡片流） ====== -->
+    <div id="xsEntryView" class="xs-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="xs-navbar">
+        <button id="xsEntryBackBtn" class="xs-back-btn" title="返回地图">
+          <span class="xs-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="xs-nav-title">香山革命纪念馆</h2>
+        <div class="xs-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="xs-entry-content" id="xsEntryContent">
+        <!-- 封面大图（Hero） -->
+        <div class="xs-hero">
+          <img
+            id="xsHeroImg"
+            class="xs-hero-img"
+            src=""
+            alt="香山革命纪念馆"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #16110f, #0c0a09)'; this.style.display='none';"
+          />
+          <div class="xs-hero-overlay">
+            <h1 class="xs-hero-title">香山革命纪念馆</h1>
+            <p id="xsHeroDesc" class="xs-hero-desc">进京赶考的第一站，重温共和国的奠基岁月。</p>
+          </div>
+        </div>
+
+        <!-- 第一板块：主展厅 -->
+        <div class="xs-cards-section">
+          <div class="xs-cards-label">🏛️ 主展厅 · 共 <span id="xsMainCount">5</span> 个部分</div>
+          <div class="xs-cards-grid" id="xsMainGrid">
+            <!-- JS 动态填充 5 个主展厅卡片 -->
+          </div>
+        </div>
+
+        <!-- 第二板块：文艺工作专题展览 -->
+        <div class="xs-cards-section">
+          <div class="xs-art-head">
+            <h3 class="xs-art-title">文艺工作专题展览</h3>
+            <div class="xs-art-subtitle">序厅 + 四个单元 · 共 <span id="xsArtCount">5</span> 个展区</div>
+          </div>
+          <div class="xs-cards-grid" id="xsArtGrid">
+            <!-- JS 动态填充 5 个专题展览卡片 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图（主图 + 缩略图轨道） ====== -->
+    <div id="xsGalleryView" class="xs-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="xs-navbar">
+        <button id="xsGalleryBackBtn" class="xs-back-btn" title="返回展区总览">
+          <span class="xs-back-arrow">←</span>
+          <span id="xsGalleryBackLabel">展区总览</span>
+        </button>
+        <h2 id="xsGalleryTitle" class="xs-nav-title">香山革命纪念馆 · 序厅</h2>
+        <div class="xs-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台（object-fit: contain，黑色背景） -->
+      <div class="xs-gallery-stage" id="xsGalleryStage">
+        <img
+          id="xsMainImg"
+          class="xs-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="xsArrowLeft" class="xs-arrow xs-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="xsArrowRight" class="xs-arrow xs-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="xsCounter" class="xs-counter hidden">
+          <span id="xsCounterCurr">1</span> / <span id="xsCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="xs-thumb-bar" id="xsThumbBar">
+        <div class="xs-thumb-track" id="xsThumbTrack">
+          <!-- JS 动态填充该展区所有图片缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- ==================== 18. 香山双清别墅 · 单视图全屏画廊弹窗（sq- 前缀，点击 Marker 直接进入） ==================== -->
+  <div id="sqGalleryModal" class="sq-gallery-modal hidden">
+    <!-- 顶部导航栏 -->
+    <div class="sq-navbar">
+      <button id="sqBackBtn" class="sq-back-btn" title="返回地图">
+        <span class="sq-back-arrow">←</span>
+        <span>返回地图</span>
+      </button>
+      <h2 id="sqTitle" class="sq-nav-title">香山双清别墅</h2>
+      <div class="sq-nav-spacer"></div>
+    </div>
+
+    <!-- 主画面舞台（object-fit: contain，黑色背景） -->
+    <div class="sq-gallery-stage" id="sqGalleryStage">
+      <img
+        id="sqMainImg"
+        class="sq-main-img"
+        src=""
+        alt="主画面"
+        draggable="false"
+      />
+
+      <!-- 左箭头（多图时显示） -->
+      <button id="sqArrowLeft" class="sq-arrow sq-arrow-left hidden" title="上一张">‹</button>
+
+      <!-- 右箭头（多图时显示） -->
+      <button id="sqArrowRight" class="sq-arrow sq-arrow-right hidden" title="下一张">›</button>
+
+      <!-- 页码指示器（多图时显示） -->
+      <div id="sqCounter" class="sq-counter hidden">
+        <span id="sqCounterCurr">1</span> / <span id="sqCounterTotal">1</span>
+      </div>
+    </div>
+
+    <!-- 底部横向可滑动缩略图轨道 -->
+    <div class="sq-thumb-bar" id="sqThumbBar">
+      <div class="sq-thumb-track" id="sqThumbTrack">
+        <!-- JS 动态填充双清别墅所有图片缩略图 -->
+      </div>
+    </div>
+  </div>
+
+<!-- ==================== 19. 清华园车站旧址 · 一弹窗两视图沉浸式交互弹窗（cz- 前缀） ==================== -->
+  <div id="czSceneModal" class="cz-scene-modal hidden">
+    <!-- ====== 视图 A：入口卡片视图（封面大图 + 三展厅网格） ====== -->
+    <div id="czEntryView" class="cz-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="cz-navbar">
+        <button id="czEntryBackBtn" class="cz-back-btn" title="返回地图">
+          <span class="cz-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="cz-nav-title">清华园车站旧址</h2>
+        <div class="cz-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="cz-entry-content">
+        <!-- Hero 封面大图 -->
+        <div class="cz-hero">
+          <img
+            id="czHeroImg"
+            class="cz-hero-img"
+            src=""
+            alt="清华园车站旧址"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #0d1b2a, #06090f)'; this.style.display='none';"
+          />
+          <div class="cz-hero-overlay">
+            <h1 class="cz-hero-title">清华园车站旧址</h1>
+            <p id="czHeroDesc" class="cz-hero-desc">进京赶考的第一站，见证了新中国黎明前的重要时刻。</p>
+          </div>
+        </div>
+
+        <!-- 展厅卡片网格 -->
+        <div class="cz-cards-section">
+          <div class="cz-cards-label">🚉 展厅概览 · 共 <span id="czHallCount">3</span> 个展厅</div>
+          <div class="cz-cards-grid" id="czCardsGrid">
+            <!-- JS 动态填充 3 个展厅卡片 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图（大图 + 缩略图轨道） ====== -->
+    <div id="czGalleryView" class="cz-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="cz-navbar">
+        <button id="czGalleryBackBtn" class="cz-back-btn" title="返回展厅总览">
+          <span class="cz-back-arrow">←</span>
+          <span id="czGalleryBackLabel">展厅总览</span>
+        </button>
+        <h2 id="czGalleryTitle" class="cz-nav-title">清华园车站旧址 · 第一部分</h2>
+        <div class="cz-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台（object-fit: contain，黑色背景） -->
+      <div class="cz-gallery-stage" id="czGalleryStage">
+        <img
+          id="czMainImg"
+          class="cz-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="czArrowLeft" class="cz-arrow cz-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="czArrowRight" class="cz-arrow cz-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="czCounter" class="cz-counter hidden">
+          <span id="czCounterCurr">1</span> / <span id="czCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="cz-thumb-bar" id="czThumbBar">
+        <div class="cz-thumb-track" id="czThumbTrack">
+          <!-- JS 动态填充该展厅所有图片缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- ==================== 20. 军事博物馆 · 一弹窗两视图沉浸式交互弹窗（jb- 前缀） ==================== -->
+  <div id="jbSceneModal" class="jb-scene-modal hidden">
+    <!-- ====== 视图 A：入口楼层视图（封面大图 + 分层展厅网格） ====== -->
+    <div id="jbEntryView" class="jb-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="jb-navbar">
+        <button id="jbEntryBackBtn" class="jb-back-btn" title="返回地图">
+          <span class="jb-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="jb-nav-title">军事博物馆</h2>
+        <div class="jb-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="jb-entry-content">
+        <!-- Hero 封面大图 -->
+        <div class="jb-hero">
+          <img
+            id="jbHeroImg"
+            class="jb-hero-img"
+            src=""
+            alt="军事博物馆"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #2a0d0d, #0a0505)'; this.style.display='none';"
+          />
+          <div class="jb-hero-overlay">
+            <h1 class="jb-hero-title">军事博物馆</h1>
+            <p id="jbHeroDesc" class="jb-hero-desc">大国重器，铁血军魂。全面展示人民军队的辉煌历程。</p>
+          </div>
+        </div>
+
+        <!-- 楼层区块容器（JS 按楼层动态渲染：B1 / F1 / F2 / F3） -->
+        <div class="jb-floors" id="jbFloors">
+          <!-- JS 动态填充：每个楼层一个 .jb-floor-section（楼层标题 + 展厅卡片网格） -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图（大图 + 缩略图轨道） ====== -->
+    <div id="jbGalleryView" class="jb-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="jb-navbar">
+        <button id="jbGalleryBackBtn" class="jb-back-btn" title="返回展厅总览">
+          <span class="jb-back-arrow">←</span>
+          <span id="jbGalleryBackLabel">展厅总览</span>
+        </button>
+        <h2 id="jbGalleryTitle" class="jb-nav-title">军事博物馆 · 1号展厅</h2>
+        <div class="jb-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台（object-fit: contain，黑色背景） -->
+      <div class="jb-gallery-stage" id="jbGalleryStage">
+        <img
+          id="jbMainImg"
+          class="jb-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="jbArrowLeft" class="jb-arrow jb-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="jbArrowRight" class="jb-arrow jb-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="jbCounter" class="jb-counter hidden">
+          <span id="jbCounterCurr">1</span> / <span id="jbCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="jb-thumb-bar" id="jbThumbBar">
+        <div class="jb-thumb-track" id="jbThumbTrack">
+          <!-- JS 动态填充该展厅所有图片缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 21. 中国共产党历史展览馆 · 一弹窗两视图沉浸式交互弹窗（ds- 前缀） ==================== -->
+  <div id="dsSceneModal" class="ds-scene-modal hidden">
+    <!-- ====== 视图 A：入口三板块视图（Hero + 主展区 + 人民的城市 + 人民的文艺） ====== -->
+    <div id="dsEntryView" class="ds-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="ds-navbar">
+        <button id="dsEntryBackBtn" class="ds-back-btn" title="返回地图">
+          <span class="ds-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="ds-nav-title">中国共产党历史展览馆</h2>
+        <div class="ds-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="ds-entry-content">
+        <!-- 封面大图（Hero） -->
+        <div class="ds-hero">
+          <img
+            id="dsHeroImg"
+            class="ds-hero-img"
+            src=""
+            alt="中国共产党历史展览馆"
+            onerror="this.parentElement.style.background='linear-gradient(135deg, #1a0d12, #080406)'; this.style.display='none';"
+          />
+          <div class="ds-hero-overlay">
+            <h1 class="ds-hero-title">中国共产党历史展览馆</h1>
+            <p id="dsHeroDesc" class="ds-hero-desc">不忘初心，牢记使命。百年党史的宏大史诗。</p>
+          </div>
+        </div>
+
+        <!-- 第一板块：主展区（9 个展厅） -->
+        <div class="ds-cards-section">
+          <div class="ds-cards-label">🏛️ 主展区 · 共 <span id="dsMainCount">9</span> 个展厅</div>
+          <div class="ds-cards-grid" id="dsMainGrid">
+            <!-- JS 动态填充 9 个主展区展厅卡片 -->
+          </div>
+        </div>
+
+        <!-- 第二板块：人民的城市（4 个展厅） -->
+        <div class="ds-cards-section">
+          <div class="ds-group-head">
+            <h3 class="ds-group-title">人民的城市</h3>
+            <div class="ds-group-subtitle">共 <span id="dsCityCount">4</span> 个展厅</div>
+          </div>
+          <div class="ds-cards-grid" id="dsCityGrid">
+            <!-- JS 动态填充 4 个人民的城市展厅卡片 -->
+          </div>
+        </div>
+
+        <!-- 第三板块：人民的文艺（3 个展厅） -->
+        <div class="ds-cards-section">
+          <div class="ds-group-head">
+            <h3 class="ds-group-title">人民的文艺</h3>
+            <div class="ds-group-subtitle">共 <span id="dsArtCount">3</span> 个展厅</div>
+          </div>
+          <div class="ds-cards-grid" id="dsArtGrid">
+            <!-- JS 动态填充 3 个人民的文艺展厅卡片 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图（大图 + 缩略图轨道） ====== -->
+    <div id="dsGalleryView" class="ds-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="ds-navbar">
+        <button id="dsGalleryBackBtn" class="ds-back-btn" title="返回展区总览">
+          <span class="ds-back-arrow">←</span>
+          <span id="dsGalleryBackLabel">展区总览</span>
+        </button>
+        <h2 id="dsGalleryTitle" class="ds-nav-title">中国共产党历史展览馆 · 第一展厅</h2>
+        <div class="ds-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台（object-fit: contain，黑色背景） -->
+      <div class="ds-gallery-stage" id="dsGalleryStage">
+        <img
+          id="dsMainImg"
+          class="ds-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="dsArrowLeft" class="ds-arrow ds-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="dsArrowRight" class="ds-arrow ds-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="dsCounter" class="ds-counter hidden">
+          <span id="dsCounterCurr">1</span> / <span id="dsCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="ds-thumb-bar" id="dsThumbBar">
+        <div class="ds-thumb-track" id="dsThumbTrack">
+          <!-- JS 动态填充该展厅所有图片缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 22. 非遗馆 · 一弹窗两视图沉浸式交互弹窗（fy- 前缀 · 深色高级背景） ==================== -->
+  <div id="fySceneModal" class="fy-scene-modal hidden">
+    <!-- ====== 视图 A：入口网格视图（展厅卡片网格，无 Hero） ====== -->
+    <div id="fyEntryView" class="fy-entry-view">
+      <!-- 顶部导航栏 -->
+      <div class="fy-navbar">
+        <button id="fyEntryBackBtn" class="fy-back-btn" title="返回地图">
+          <span class="fy-back-arrow">←</span>
+          <span>返回地图</span>
+        </button>
+        <h2 class="fy-nav-title">中国工艺美术馆 (非遗馆)</h2>
+        <div class="fy-nav-spacer"></div>
+      </div>
+
+      <!-- 入口内容区（纵向滚动） -->
+      <div class="fy-entry-content">
+        <!-- 展厅卡片网格 -->
+        <div class="fy-cards-section">
+          <div class="fy-cards-label">🏛️ 展厅概览 · 共 <span id="fyHallCount">5</span> 个展厅</div>
+          <div class="fy-cards-grid" id="fyCardsGrid">
+            <!-- JS 动态填充 5 个展厅卡片 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图 B：画廊视图（主图 + 缩略图轨道） ====== -->
+    <div id="fyGalleryView" class="fy-gallery-view hidden">
+      <!-- 顶部导航栏 -->
+      <div class="fy-navbar">
+        <button id="fyGalleryBackBtn" class="fy-back-btn" title="返回展厅总览">
+          <span class="fy-back-arrow">←</span>
+          <span id="fyGalleryBackLabel">展厅总览</span>
+        </button>
+        <h2 id="fyGalleryTitle" class="fy-nav-title">中国工艺美术馆 (非遗馆) · 文脉华滋</h2>
+        <div class="fy-nav-spacer"></div>
+      </div>
+
+      <!-- 主画面舞台（object-fit: contain，黑色背景） -->
+      <div class="fy-gallery-stage" id="fyGalleryStage">
+        <img
+          id="fyMainImg"
+          class="fy-main-img"
+          src=""
+          alt="主画面"
+          draggable="false"
+        />
+
+        <!-- 左箭头（多图时显示） -->
+        <button id="fyArrowLeft" class="fy-arrow fy-arrow-left hidden" title="上一张">‹</button>
+
+        <!-- 右箭头（多图时显示） -->
+        <button id="fyArrowRight" class="fy-arrow fy-arrow-right hidden" title="下一张">›</button>
+
+        <!-- 页码指示器（多图时显示） -->
+        <div id="fyCounter" class="fy-counter hidden">
+          <span id="fyCounterCurr">1</span> / <span id="fyCounterTotal">1</span>
+        </div>
+      </div>
+
+      <!-- 底部横向可滑动缩略图轨道 -->
+      <div class="fy-thumb-bar" id="fyThumbBar">
+        <div class="fy-thumb-track" id="fyThumbTrack">
+          <!-- JS 动态填充该展厅所有图片缩略图 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
